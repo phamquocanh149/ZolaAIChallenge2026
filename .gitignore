@@ -1,0 +1,20 @@
+# Runtime artifacts and private competition data
+**/__pycache__/
+**/.ipynb_checkpoints/
+**/artifacts/
+**/models/
+**/cache/
+**/.cache/
+**/.venv/
+**/runs/
+**/tmp/
+*.zip
+*.wav
+*.safetensors
+*.bin
+train+public_test/
+train/
+public_test/
+private_test/
+*_environment/
+submission*.jsonl
