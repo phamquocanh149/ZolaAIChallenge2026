@@ -26,7 +26,7 @@ Không đóng gói hoặc upload lại dataset cuộc thi vào kho công khai.
 - Context mặc định 4096, có thể tăng `--context 6144` hoặc `8192` nếu GPU đủ RAM.
 - PhoGPT dùng template chính thức `### Câu hỏi: ...\n### Trả lời:` và remote implementation MPT của model.
 - Dùng FP16, hoặc BF16 nếu GPU hỗ trợ. Chưa lượng tử hóa; trọng số LLM khoảng 7–8 GB, còn cần ASR, activations và KV cache. Không coi 7–8 GB là toàn bộ VRAM cần dùng.
-- `requirements.txt` pin Transformers 4.44.2 để tránh thay đổi API lớn của custom model cũ; giữ PyTorch CUDA do Kaggle cung cấp. Chưa xác nhận chạy GPU trong phiên phát triển local này.
+- `requirements.txt` pin Transformers 4.44.2 để tránh thay đổi API lớn của custom model cũ; dùng Python 3.11 riêng và PyTorch 2.5.1 CUDA 12.1 do setup_kaggle.py cài. Chưa xác nhận chạy GPU trong phiên phát triển local này.
 - `download` chỉ là bước chuẩn bị có Internet: tải model và custom Python code, lưu commit SHA vào `models/manifest.json`.
 - `infer` ép `HF_HUB_OFFLINE=1`, `TRANSFORMERS_OFFLINE=1`, `local_files_only=True`; không tải model lúc inference.
 - Mọi output/cache trên Kaggle nằm dưới `/kaggle/working/pipeline_baseline`. Không ghi vào `/kaggle/input`.
@@ -114,3 +114,21 @@ Không dùng public labels hoặc phản hồi public để tạo dữ liệu hu
 
 Nguồn model: https://github.com/VinAIResearch/PhoGPT ; https://huggingface.co/vinai/PhoWhisper-small
 Thể lệ: `../rule.txt`; chi tiết môi trường: README trong gói dữ liệu.
+
+## Sửa lỗi cài đặt trên Kaggle Python 3.13
+
+Không cài requirements trực tiếp bằng Python của notebook. Các pin tokenizers/sentencepiece cũ không có wheel CPython 3.13 phù hợp.
+Chạy `setup_kaggle.py` bằng kernel Python; script dùng uv để tạo `.venv311` dưới work-dir, cài PyTorch CUDA riêng,
+chỉ nhận binary wheels, chạy pip check và kiểm tra import/GPU. Không dùng site-packages của Python 3.13.
+
+```python
+import sys, subprocess
+WORK = "/kaggle/working/pipeline_baseline"
+subprocess.run([sys.executable, "setup_kaggle.py", "--work-dir", WORK], check=True)
+PYTHON = f"{WORK}/.venv311/bin/python"
+# Trong hàm run(), thay sys.executable bằng PYTHON.
+```
+
+Các lệnh CLI `python run.py ...` trong tài liệu phải dùng Python của `.venv311`.
+Không cần đổi kernel notebook hoặc tải lại model đã lưu. Cần Internet cho bước setup và vài GB dung lượng cho PyTorch/CUDA.
+Setup cài được dependencies chưa đồng nghĩa model đã đạt smoke test; vẫn chạy smoke oracle/audio trước.

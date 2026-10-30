@@ -27,10 +27,11 @@ for key, folder in {'PIP_CACHE_DIR': 'cache/pip', 'TMPDIR': 'tmp'}.items():
     path = Path(WORK) / folder
     path.mkdir(parents=True, exist_ok=True)
     os.environ[key] = str(path)
-subprocess.run([sys.executable, '-m', 'pip', 'install', '-r', 'requirements.txt'], check=True)
+subprocess.run([sys.executable, 'setup_kaggle.py', '--work-dir', WORK], check=True)
+PYTHON = f'{WORK}/.venv311/bin/python'
 
 def run(*args):
-    subprocess.run([sys.executable, SCRIPT, *args,
+    subprocess.run([PYTHON, SCRIPT, *args,
                     '--data-root', DATA, '--work-dir', WORK], check=True)
 
 run('prepare')

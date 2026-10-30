@@ -23,7 +23,7 @@ Chạy theo thứ tự. Cell public chỉ chạy khi bật `RUN_PUBLIC=True`.
 Đây là zero-shot baseline, chưa fine-tune; chưa được kiểm chứng chất lượng/tốc độ trên GPU.
 """)
 sources = {n: (ROOT / n).read_text(encoding="utf-8") for n in
-           ("core.py", "models.py", "run.py", "requirements.txt", "test_core.py", "README.md")}
+           ("core.py", "models.py", "run.py", "requirements.txt", "test_core.py", "README.md", "setup_kaggle.py")}
 code('''import os, sys, json, subprocess, pathlib
 WORK = pathlib.Path("/kaggle/working/pipeline_baseline")
 SRC = WORK / "src"
@@ -37,13 +37,14 @@ for key, suffix in {"PIP_CACHE_DIR":"cache/pip", "HF_HOME":"cache/hf", "TMPDIR":
 for name, content in SOURCES.items():
     (SRC / name).write_text(content, encoding="utf-8")
 def run(*args):
-    subprocess.run([sys.executable, str(SRC / "run.py"), *map(str, args),
+    subprocess.run([PYTHON, str(SRC / "run.py"), *map(str, args),
                     "--data-root", DATA, "--work-dir", str(WORK)], check=True)
 print("Source:", SRC)
 ''')
-md("Cài dependencies cho subprocess. Giữ nguyên PyTorch CUDA của Kaggle. Không import Transformers trong kernel trước bước này.")
-code('''subprocess.run([sys.executable, "-m", "pip", "install", "-r", str(SRC / "requirements.txt")], check=True)
-subprocess.run([sys.executable, "-m", "unittest", "-v", "test_core"], cwd=SRC, check=True)
+md("Tạo Python 3.11 riêng và cài PyTorch CUDA cùng dependencies. Kernel Kaggle không bị thay đổi.")
+code('''subprocess.run([sys.executable, str(SRC / "setup_kaggle.py"), "--work-dir", str(WORK)], check=True)
+PYTHON = str(WORK / ".venv311/bin/python")
+subprocess.run([PYTHON, "-m", "unittest", "-v", "test_core"], cwd=SRC, check=True)
 subprocess.run(["nvidia-smi"], check=True)
 run("prepare")
 ''')
